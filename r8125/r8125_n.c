@@ -151,7 +151,12 @@ MODULE_DEVICE_TABLE(pci, rtl8125_pci_tbl);
 
 static int rx_copybreak = 0;
 static int use_dac = 1;
-static int timer_count = 0x0700; //default is 0x2600, but single thread might not get full speed at single thread;
+
+#ifdef __VMKLNX__
+static int timer_count = 0;// When enable timer poll, the guest speed will be extremely slow.
+#else
+static int timer_count = 0x2600;// default is 0x2600, but single thread might not get full speed at single thread;	
+#endif
 
 static struct {
         u32 msg_enable;
@@ -11948,8 +11953,8 @@ rtl8125_tx_csum(struct sk_buff *skb,
 #else
                 skb_checksum_help(skb);
 #endif
-                csum_cmd = 0;
 #endif //#ifdef __VMKLNX__
+		csum_cmd = 0;
         }
 
         return csum_cmd;
