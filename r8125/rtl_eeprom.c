@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
 ################################################################################
 #
@@ -33,7 +34,17 @@
 
 #include <linux/init.h>
 #include <linux/module.h>
+//The vmkernel network api is from 2.6.24,not the default 2.6.18
+#ifndef LINUX_VERSION_CODE
 #include <linux/version.h>
+#undef LINUX_VERSION_CODE
+#define LINUX_VERSION_CODE KERNEL_VERSION(2,6,24)
+#endif 
+//The vmkernel network api is from 2.6.24,not the default 2.6.18
+#ifdef LINUX_VERSION_CODE
+#undef LINUX_VERSION_CODE
+#define LINUX_VERSION_CODE KERNEL_VERSION(2,6,24)
+#endif 
 #include <linux/ethtool.h>
 #include <linux/netdevice.h>
 #include <linux/delay.h>
