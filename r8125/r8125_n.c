@@ -162,13 +162,14 @@ MODULE_DEVICE_TABLE(pci, rtl8125_pci_tbl);
 static int rx_copybreak = 0;
 static int use_dac = 1;
 
+//Maybe timer_count issue has been repaired in 9.004.01
 #ifndef __VMKLNX__
 static int timer_count = 0x0700;	//0x2600 is default, 0x0700 for single thread speed issue
 static int timer_count_v2 = (0x0700 / 0x100);
 #else
-static int timer_count = 0;	//0x2600 is default, 0x0700 for single thread speed issue
-static int timer_count_v2 = 0;
-#endif //use_timer_interrrupt make net speed very slow
+static int timer_count = 0x2600;	//0x2600 is default, 0x0700 for single thread speed issue
+static int timer_count_v2 = (0x2600 / 0x100);
+#endif 
 
 static struct {
         u32 msg_enable;
@@ -9483,9 +9484,6 @@ rtl8125_init_software_variable(struct net_device *dev)
 
         switch (tp->mcfg) {
         default:
-		//Add by GanFan for test
-				tp->ShortPacketSwChecksum = 1;
-				tp->UseSwPaddingShortPkt = 1;
 				
                 tp->SwPaddingShortPktLen = ETH_ZLEN;
                 break;
@@ -9717,8 +9715,10 @@ rtl8125_init_software_variable(struct net_device *dev)
         dev->min_mtu = ETH_MIN_MTU;
         dev->max_mtu = tp->max_jumbo_frame_size;
 #endif //LINUX_VERSION_CODE >= KERNEL_VERSION(4,10,0)
-        tp->eee_enabled = eee_enable;
-        tp->eee_adv_t = MDIO_EEE_1000T | MDIO_EEE_100TX;
+
+		//Modified for eee issue
+        tp->eee_enabled = 0; //eee_enable;
+        tp->eee_adv_t = 0; //MDIO_EEE_1000T | MDIO_EEE_100TX;
 }
 
 static void
@@ -11500,8 +11500,10 @@ rtl8125_init_one(struct pci_dev *pdev,
 #endif //LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 #endif //LINUX_VERSION_CODE < KERNEL_VERSION(3,0,0)
 
+//Disable all buggy checksums
 #ifdef __VMKLNX__
-                dev->features |= NETIF_F_IP_CSUM | NETIF_F_TSO | NETIF_F_IPV6_CSUM | NETIF_F_TSO6;
+                dev->features &= ~(NETIF_F_IP_CSUM | NETIF_F_TSO | NETIF_F_IPV6_CSUM | NETIF_F_TSO6);
+				tp->cp_cmd &= ~RxChkSum;
 				netif_set_gso_max_size(dev, LSO_64K);
 #endif //#ifdef __VMKLNX__
 
